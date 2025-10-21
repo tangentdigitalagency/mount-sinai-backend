@@ -11,6 +11,12 @@
       "env": {
         "SUPABASE_ACCESS_TOKEN": "sbp_8b860ce860fdafc92b096a78eab5a548d92c8090"
       }
+    },
+    "render": {
+      "url": "https://mcp.render.com/mcp",
+      "headers": {
+        "Authorization": "Bearer rnd_z9kvCw2Eab09r9VxaIFYwxOcda4m"
+      }
     }
   }
 }
