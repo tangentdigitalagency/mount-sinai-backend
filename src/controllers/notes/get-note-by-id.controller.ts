@@ -76,5 +76,14 @@ export const getNoteById = async (req: AuthRequest, res: Response) => {
     data: noteWithData,
   };
 
+  // Detailed logging of the response data
+  console.log("\n========================================");
+  console.log("📝 GET NOTE BY ID API RESPONSE");
+  console.log("========================================");
+  console.log("Note ID:", noteId);
+  console.log("\nFull Response Data:");
+  console.log(JSON.stringify(response, null, 2));
+  console.log("========================================\n");
+
   res.json(response);
 };

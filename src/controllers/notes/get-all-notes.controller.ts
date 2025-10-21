@@ -101,6 +101,19 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
     }`,
   };
 
+  // Detailed logging of the response data
+  console.log("\n========================================");
+  console.log("📝 GET ALL NOTES API RESPONSE");
+  console.log("========================================");
+  console.log("Total Notes:", notesWithData.length);
+  console.log("\nFull Response Data:");
+  console.log(JSON.stringify(response, null, 2));
+  console.log("\nFirst Note (if exists):");
+  if (notesWithData.length > 0) {
+    console.log(JSON.stringify(notesWithData[0], null, 2));
+  }
+  console.log("========================================\n");
+
   logger.info(`User ${userId} retrieved ${notesWithData.length} notes`);
   res.json(response);
 };
