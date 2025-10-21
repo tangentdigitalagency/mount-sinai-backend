@@ -151,9 +151,33 @@ export type ConversationHistory = z.infer<typeof ConversationHistorySchema>;
 // AI RESPONSE TYPES
 // ============================================================================
 
+export const DetailedSourceSchema = z.object({
+  title: z.string(),
+  author: z.string(),
+  type: z.enum(["book", "commentary", "study_bible", "online_resource"]),
+  url: z.string().optional(),
+  description: z.string(),
+  publisher: z.string().optional(),
+  year: z.number().optional(),
+  isbn: z.string().optional(),
+  relevance: z.number().min(0).max(1),
+});
+
+export const DetailedVerseSchema = z.object({
+  book: z.string(),
+  chapter: z.number(),
+  verse: z.number(),
+  version: z.string().optional(),
+  fullReference: z.string(),
+  text: z.string().optional(),
+  url: z.string().optional(),
+});
+
 export const AIResponseMetadataSchema = z.object({
   versesCited: z.array(z.string()).optional(),
+  detailedVerses: z.array(DetailedVerseSchema).optional(),
   sourcesCited: z.array(z.string()).optional(),
+  detailedSources: z.array(DetailedSourceSchema).optional(),
   crossReferences: z.array(z.string()).optional(),
   theologicalTopics: z.array(z.string()).optional(),
   confidence: z.number().min(0).max(1).optional(),

@@ -2,6 +2,12 @@ import { Router } from "express";
 import { asyncHandler } from "../utils/async-handler";
 import { authenticateUser } from "../middleware/auth";
 import { validate } from "../middleware/validation";
+import {
+  messageRateLimit,
+  sessionRateLimit,
+  learningProfileRateLimit,
+  generalRateLimit,
+} from "../middleware/rate-limiter";
 // import type { AuthRequest } from "../middleware/auth";
 
 // Import controllers
@@ -38,6 +44,7 @@ const router = Router();
  */
 router.post(
   "/sessions",
+  sessionRateLimit,
   authenticateUser,
   validate(CreateChatSessionSchema),
   asyncHandler(createSession)
@@ -47,13 +54,23 @@ router.post(
  * GET /api/ai-chat/sessions
  * List user's AI chat sessions
  */
-router.get("/sessions", authenticateUser, asyncHandler(listSessions));
+router.get(
+  "/sessions",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(listSessions)
+);
 
 /**
  * GET /api/ai-chat/sessions/:id
  * Get a specific AI chat session with recent messages
  */
-router.get("/sessions/:id", authenticateUser, asyncHandler(getSession));
+router.get(
+  "/sessions/:id",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(getSession)
+);
 
 /**
  * PATCH /api/ai-chat/sessions/:id
@@ -61,6 +78,7 @@ router.get("/sessions/:id", authenticateUser, asyncHandler(getSession));
  */
 router.patch(
   "/sessions/:id",
+  generalRateLimit,
   authenticateUser,
   validate(UpdateChatSessionSchema),
   asyncHandler(updateSession)
@@ -70,7 +88,12 @@ router.patch(
  * DELETE /api/ai-chat/sessions/:id
  * Delete an AI chat session
  */
-router.delete("/sessions/:id", authenticateUser, asyncHandler(deleteSession));
+router.delete(
+  "/sessions/:id",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(deleteSession)
+);
 
 // ============================================================================
 // CHAT MESSAGE ROUTES
@@ -82,6 +105,7 @@ router.delete("/sessions/:id", authenticateUser, asyncHandler(deleteSession));
  */
 router.post(
   "/sessions/:id/messages",
+  messageRateLimit,
   authenticateUser,
   validate(SendMessageSchema),
   asyncHandler(sendMessage)
@@ -93,6 +117,7 @@ router.post(
  */
 router.get(
   "/sessions/:id/messages",
+  generalRateLimit,
   authenticateUser,
   asyncHandler(getMessages)
 );
@@ -107,6 +132,7 @@ router.get(
  */
 router.get(
   "/learning-profile",
+  generalRateLimit,
   authenticateUser,
   asyncHandler(getLearningProfile)
 );
@@ -117,6 +143,7 @@ router.get(
  */
 router.put(
   "/learning-profile/:id",
+  learningProfileRateLimit,
   authenticateUser,
   validate(UpdateLearningProfileSchema),
   asyncHandler(updateLearningProfile)
@@ -128,6 +155,7 @@ router.put(
  */
 router.delete(
   "/learning-profile/:id",
+  learningProfileRateLimit,
   authenticateUser,
   asyncHandler(deleteLearningProfile)
 );

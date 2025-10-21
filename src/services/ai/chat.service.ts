@@ -254,6 +254,7 @@ export class ChatService {
   }> {
     // Extract verse references
     const versesCited = this.extractVerseReferences(response);
+    const detailedVerses = this.extractDetailedVerses(response);
 
     // Extract theological topics
     const theologicalTopics = this.extractTheologicalTopics(response);
@@ -263,16 +264,18 @@ export class ChatService {
       versesCited
     );
 
-    // Get citable sources
-    const sourcesCited = await this.theologicalSources.getCitableSources(
+    // Get citable sources with detailed information
+    const sourceData = await this.theologicalSources.getCitableSources(
       theologicalTopics
     );
 
     const metadata: AIResponseMetadata = {
       versesCited,
+      detailedVerses,
       theologicalTopics,
       crossReferences,
-      sourcesCited,
+      sourcesCited: sourceData.sources,
+      detailedSources: sourceData.detailedSources,
       confidence: 0.8, // Default confidence
     };
 
@@ -396,6 +399,127 @@ Use a friendly, scholarly tone that reflects your expertise while being approach
     }
 
     return references;
+  }
+
+  private extractDetailedVerses(
+    text: string,
+    defaultVersion: string = "ESV"
+  ): Array<{
+    book: string;
+    chapter: number;
+    verse: number;
+    version: string;
+    fullReference: string;
+    text?: string;
+    url?: string;
+  }> {
+    const versePattern = /\[([A-Za-z\s]+)\s+(\d+):(\d+)\]/g;
+    const detailedVerses: Array<{
+      book: string;
+      chapter: number;
+      verse: number;
+      version: string;
+      fullReference: string;
+      text?: string;
+      url?: string;
+    }> = [];
+    let match;
+
+    while ((match = versePattern.exec(text)) !== null) {
+      const book = match[1].trim();
+      const chapter = parseInt(match[2]);
+      const verse = parseInt(match[3]);
+      const fullReference = `${book} ${chapter}:${verse}`;
+
+      // Generate Bible Gateway URL for the verse
+      const bookAbbrev = this.getBookAbbreviation(book);
+      const url = `https://www.biblegateway.com/passage/?search=${bookAbbrev}+${chapter}%3A${verse}&version=${defaultVersion}`;
+
+      detailedVerses.push({
+        book,
+        chapter,
+        verse,
+        version: defaultVersion,
+        fullReference,
+        url,
+      });
+    }
+
+    return detailedVerses;
+  }
+
+  private getBookAbbreviation(bookName: string): string {
+    const bookAbbreviations: Record<string, string> = {
+      Genesis: "Gen",
+      Exodus: "Exod",
+      Leviticus: "Lev",
+      Numbers: "Num",
+      Deuteronomy: "Deut",
+      Joshua: "Josh",
+      Judges: "Judg",
+      Ruth: "Ruth",
+      "1 Samuel": "1Sam",
+      "2 Samuel": "2Sam",
+      "1 Kings": "1Kgs",
+      "2 Kings": "2Kgs",
+      "1 Chronicles": "1Chr",
+      "2 Chronicles": "2Chr",
+      Ezra: "Ezra",
+      Nehemiah: "Neh",
+      Esther: "Esth",
+      Job: "Job",
+      Psalms: "Ps",
+      Psalm: "Ps",
+      Proverbs: "Prov",
+      Ecclesiastes: "Eccl",
+      "Song of Solomon": "Song",
+      Isaiah: "Isa",
+      Jeremiah: "Jer",
+      Lamentations: "Lam",
+      Ezekiel: "Ezek",
+      Daniel: "Dan",
+      Hosea: "Hos",
+      Joel: "Joel",
+      Amos: "Amos",
+      Obadiah: "Obad",
+      Jonah: "Jonah",
+      Micah: "Mic",
+      Nahum: "Nah",
+      Habakkuk: "Hab",
+      Zephaniah: "Zeph",
+      Haggai: "Hag",
+      Zechariah: "Zech",
+      Malachi: "Mal",
+      Matthew: "Matt",
+      Mark: "Mark",
+      Luke: "Luke",
+      John: "John",
+      Acts: "Acts",
+      Romans: "Rom",
+      "1 Corinthians": "1Cor",
+      "2 Corinthians": "2Cor",
+      Galatians: "Gal",
+      Ephesians: "Eph",
+      Philippians: "Phil",
+      Colossians: "Col",
+      "1 Thessalonians": "1Thess",
+      "2 Thessalonians": "2Thess",
+      "1 Timothy": "1Tim",
+      "2 Timothy": "2Tim",
+      Titus: "Titus",
+      Philemon: "Phlm",
+      Hebrews: "Heb",
+      James: "Jas",
+      "1 Peter": "1Pet",
+      "2 Peter": "2Pet",
+      "1 John": "1John",
+      "2 John": "2John",
+      "3 John": "3John",
+      Jude: "Jude",
+      Revelation: "Rev",
+    };
+
+    return bookAbbreviations[bookName] || bookName;
   }
 
   private extractTheologicalTopics(text: string): string[] {

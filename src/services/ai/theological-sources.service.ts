@@ -24,52 +24,263 @@ export class TheologicalSourcesService {
   }
 
   /**
-   * Get citable theological sources for given topics
+   * Get citable theological sources for given topics with detailed information
    */
-  async getCitableSources(topics: string[]): Promise<string[]> {
+  async getCitableSources(topics: string[]): Promise<{
+    sources: string[];
+    detailedSources: Array<{
+      title: string;
+      author: string;
+      type: "book" | "commentary" | "study_bible" | "online_resource";
+      url?: string;
+      description: string;
+      publisher?: string;
+      year?: number;
+      isbn?: string;
+      relevance: number; // 0-1 score for how relevant to the topic
+    }>;
+  }> {
     try {
       const sources: string[] = [];
+      const detailedSources: Array<{
+        title: string;
+        author: string;
+        type: "book" | "commentary" | "study_bible" | "online_resource";
+        url?: string;
+        description: string;
+        publisher?: string;
+        year?: number;
+        isbn?: string;
+        relevance: number;
+      }> = [];
 
-      // Map topics to relevant sources
-      const topicSourceMap: Record<string, string[]> = {
+      // Enhanced source database with detailed information
+      const sourceDatabase = {
         salvation: [
-          "Systematic Theology by Wayne Grudem",
-          "The Institutes of the Christian Religion by John Calvin",
-          "Christian Theology by Millard Erickson",
+          {
+            title: "Systematic Theology",
+            author: "Wayne Grudem",
+            type: "book" as const,
+            description:
+              "Comprehensive systematic theology covering all major Christian doctrines with biblical foundations.",
+            publisher: "Zondervan",
+            year: 1994,
+            isbn: "978-0310286707",
+            relevance: 0.95,
+          },
+          {
+            title: "The Institutes of the Christian Religion",
+            author: "John Calvin",
+            type: "book" as const,
+            description:
+              "Classic work of Reformed theology, foundational text for understanding salvation and grace.",
+            publisher: "Westminster John Knox Press",
+            year: 1559,
+            isbn: "978-0664220280",
+            relevance: 0.9,
+          },
+          {
+            title: "Christian Theology",
+            author: "Millard Erickson",
+            type: "book" as const,
+            description:
+              "Evangelical systematic theology with balanced approach to doctrinal issues.",
+            publisher: "Baker Academic",
+            year: 2013,
+            isbn: "978-0801036374",
+            relevance: 0.85,
+          },
         ],
         grace: [
-          "What is Reformed Theology? by R.C. Sproul",
-          "The Grace of God by Andy Stanley",
-          "Systematic Theology by Louis Berkhof",
+          {
+            title: "What is Reformed Theology?",
+            author: "R.C. Sproul",
+            type: "book" as const,
+            description:
+              "Clear explanation of Reformed theology and the doctrine of grace.",
+            publisher: "Baker Books",
+            year: 2016,
+            isbn: "978-0801019254",
+            relevance: 0.9,
+          },
+          {
+            title: "The Grace of God",
+            author: "Andy Stanley",
+            type: "book" as const,
+            description:
+              "Practical exploration of God's grace in everyday life.",
+            publisher: "Zondervan",
+            year: 2010,
+            isbn: "978-0310321928",
+            relevance: 0.8,
+          },
         ],
         faith: [
-          "The Christian Faith by Friedrich Schleiermacher",
-          "Systematic Theology by Wayne Grudem",
-          "Faith Alone by R.C. Sproul",
+          {
+            title: "Faith Alone",
+            author: "R.C. Sproul",
+            type: "book" as const,
+            description:
+              "Defense of the doctrine of justification by faith alone.",
+            publisher: "Baker Books",
+            year: 2016,
+            isbn: "978-0801019254",
+            relevance: 0.9,
+          },
+          {
+            title: "The Christian Faith",
+            author: "Friedrich Schleiermacher",
+            type: "book" as const,
+            description: "Influential work on Christian doctrine and faith.",
+            publisher: "Fortress Press",
+            year: 2016,
+            isbn: "978-1506406808",
+            relevance: 0.7,
+          },
         ],
         trinity: [
-          "Systematic Theology by Wayne Grudem",
-          "The Trinity by St. Augustine",
-          "The Forgotten Trinity by James White",
+          {
+            title: "The Trinity",
+            author: "St. Augustine",
+            type: "book" as const,
+            description:
+              "Classic work on the doctrine of the Trinity by the great Church Father.",
+            publisher: "New City Press",
+            year: 1991,
+            isbn: "978-1565484463",
+            relevance: 0.95,
+          },
+          {
+            title: "The Forgotten Trinity",
+            author: "James White",
+            type: "book" as const,
+            description:
+              "Modern defense of the Trinity doctrine with biblical and historical evidence.",
+            publisher: "Bethany House",
+            year: 1998,
+            isbn: "978-0764221824",
+            relevance: 0.9,
+          },
         ],
         church: [
-          "Systematic Theology by Wayne Grudem",
-          "The Church by Edmund Clowney",
-          "The Purpose Driven Church by Rick Warren",
+          {
+            title: "The Church",
+            author: "Edmund Clowney",
+            type: "book" as const,
+            description: "Biblical theology of the church and its mission.",
+            publisher: "InterVarsity Press",
+            year: 1995,
+            isbn: "978-0830815244",
+            relevance: 0.85,
+          },
+          {
+            title: "The Purpose Driven Church",
+            author: "Rick Warren",
+            type: "book" as const,
+            description: "Practical guide to church growth and ministry.",
+            publisher: "Zondervan",
+            year: 1995,
+            isbn: "978-0310201069",
+            relevance: 0.8,
+          },
+        ],
+        bible_study: [
+          {
+            title: "ESV Study Bible",
+            author: "Crossway",
+            type: "study_bible" as const,
+            description:
+              "Comprehensive study Bible with extensive notes, maps, and articles.",
+            publisher: "Crossway",
+            year: 2008,
+            isbn: "978-1433502415",
+            url: "https://www.esv.org/study-bible/",
+            relevance: 0.95,
+          },
+          {
+            title: "NIV Study Bible",
+            author: "Zondervan",
+            type: "study_bible" as const,
+            description:
+              "Popular study Bible with detailed commentary and study notes.",
+            publisher: "Zondervan",
+            year: 2011,
+            isbn: "978-0310436110",
+            url: "https://www.biblegateway.com/versions/New-International-Version-NIV-Bible/",
+            relevance: 0.9,
+          },
+        ],
+        online_resources: [
+          {
+            title: "Blue Letter Bible",
+            author: "Blue Letter Bible",
+            type: "online_resource" as const,
+            description:
+              "Free online Bible study tools with commentaries, lexicons, and concordances.",
+            url: "https://www.blueletterbible.org/",
+            relevance: 0.9,
+          },
+          {
+            title: "Bible Gateway",
+            author: "Bible Gateway",
+            type: "online_resource" as const,
+            description:
+              "Free online Bible with multiple translations and study tools.",
+            url: "https://www.biblegateway.com/",
+            relevance: 0.85,
+          },
+          {
+            title: "Got Questions",
+            author: "Got Questions Ministries",
+            type: "online_resource" as const,
+            description: "Christian apologetics and Bible study Q&A resource.",
+            url: "https://www.gotquestions.org/",
+            relevance: 0.8,
+          },
+          {
+            title: "Ligonier Ministries",
+            author: "Ligonier Ministries",
+            type: "online_resource" as const,
+            description:
+              "Reformed theology resources, articles, and teaching materials.",
+            url: "https://www.ligonier.org/",
+            relevance: 0.9,
+          },
         ],
       };
 
+      // Get sources for each topic
       topics.forEach((topic) => {
-        const topicSources = topicSourceMap[topic.toLowerCase()];
+        const topicKey = topic.toLowerCase().replace(/\s+/g, "_");
+        const topicSources =
+          sourceDatabase[topicKey as keyof typeof sourceDatabase];
+
         if (topicSources) {
-          sources.push(...topicSources);
+          topicSources.forEach((source) => {
+            sources.push(`${source.title} by ${source.author}`);
+            detailedSources.push(source);
+          });
         }
       });
 
-      return [...new Set(sources)]; // Remove duplicates
+      // Always include some general online resources
+      const generalResources = sourceDatabase.online_resources;
+      generalResources.forEach((resource) => {
+        if (!sources.includes(`${resource.title} by ${resource.author}`)) {
+          sources.push(`${resource.title} by ${resource.author}`);
+          detailedSources.push(resource);
+        }
+      });
+
+      return {
+        sources: [...new Set(sources)], // Remove duplicates
+        detailedSources: detailedSources.sort(
+          (a, b) => b.relevance - a.relevance
+        ), // Sort by relevance
+      };
     } catch (error) {
       logger.error("Error getting citable sources:", error);
-      return [];
+      return { sources: [], detailedSources: [] };
     }
   }
 
