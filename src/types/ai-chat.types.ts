@@ -128,13 +128,19 @@ export type AIVersionConfig = z.infer<typeof AIVersionConfigSchema>;
 
 export const UserContextSchema = z.object({
   userId: z.string().uuid(),
+  userProfile: z.record(z.string(), z.unknown()).optional(),
   currentBook: z.string().optional(),
   currentChapter: z.number().int().positive().optional(),
   currentVersion: z.string().optional(),
   notes: z.array(z.record(z.string(), z.unknown())).optional(),
   highlights: z.array(z.record(z.string(), z.unknown())).optional(),
   bookmarks: z.array(z.record(z.string(), z.unknown())).optional(),
+  lovedVerses: z.array(z.record(z.string(), z.unknown())).optional(),
   readingProgress: z.record(z.string(), z.unknown()).optional(),
+  readingSettings: z.record(z.string(), z.unknown()).optional(),
+  readingPlan: z.record(z.string(), z.unknown()).optional(),
+  readingStats: z.record(z.string(), z.unknown()).optional(),
+  achievements: z.array(z.record(z.string(), z.unknown())).optional(),
   learningProfile: z.array(AIUserLearningProfileSchema).optional(),
 });
 

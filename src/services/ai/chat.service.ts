@@ -413,7 +413,6 @@ Use a friendly, scholarly tone that reflects your expertise while being approach
     text?: string;
     url?: string;
   }> {
-    const versePattern = /\[([A-Za-z\s]+)\s+(\d+):(\d+)\]/g;
     const detailedVerses: Array<{
       book: string;
       chapter: number;
@@ -423,29 +422,128 @@ Use a friendly, scholarly tone that reflects your expertise while being approach
       text?: string;
       url?: string;
     }> = [];
-    let match;
 
-    while ((match = versePattern.exec(text)) !== null) {
-      const book = match[1].trim();
-      const chapter = parseInt(match[2]);
-      const verse = parseInt(match[3]);
-      const fullReference = `${book} ${chapter}:${verse}`;
+    // Multiple patterns to catch different verse formats
+    const versePatterns = [
+      // [Book Chapter:Verse] format
+      /\[([A-Za-z\s]+)\s+(\d+):(\d+)\]/g,
+      // **Book Chapter:Verse** format (bold)
+      /\*\*([A-Za-z\s]+)\s+(\d+):(\d+)\*\*/g,
+      // Book Chapter:Verse format (plain)
+      /([A-Za-z\s]+)\s+(\d+):(\d+)/g,
+      // Book Chapter:Verse-Verse format (ranges)
+      /([A-Za-z\s]+)\s+(\d+):(\d+)-(\d+)/g,
+    ];
 
-      // Generate Bible Gateway URL for the verse
-      const bookAbbrev = this.getBookAbbreviation(book);
-      const url = `https://www.biblegateway.com/passage/?search=${bookAbbrev}+${chapter}%3A${verse}&version=${defaultVersion}`;
+    versePatterns.forEach((pattern) => {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const book = match[1].trim();
+        const chapter = parseInt(match[2]);
+        const verse = parseInt(match[3]);
 
-      detailedVerses.push({
-        book,
-        chapter,
-        verse,
-        version: defaultVersion,
-        fullReference,
-        url,
-      });
-    }
+        // Skip if this looks like a date or other number pattern
+        if (this.isValidBookName(book) && chapter > 0 && verse > 0) {
+          const fullReference = `${book} ${chapter}:${verse}`;
+
+          // Check if we already have this verse to avoid duplicates
+          const exists = detailedVerses.some(
+            (v) => v.book === book && v.chapter === chapter && v.verse === verse
+          );
+
+          if (!exists) {
+            // Generate Bible Gateway URL for the verse
+            const bookAbbrev = this.getBookAbbreviation(book);
+            const url = `https://www.biblegateway.com/passage/?search=${bookAbbrev}+${chapter}%3A${verse}&version=${defaultVersion}`;
+
+            detailedVerses.push({
+              book,
+              chapter,
+              verse,
+              version: defaultVersion,
+              fullReference,
+              url,
+            });
+          }
+        }
+      }
+    });
 
     return detailedVerses;
+  }
+
+  private isValidBookName(bookName: string): boolean {
+    const validBooks = [
+      "Genesis",
+      "Exodus",
+      "Leviticus",
+      "Numbers",
+      "Deuteronomy",
+      "Joshua",
+      "Judges",
+      "Ruth",
+      "1 Samuel",
+      "2 Samuel",
+      "1 Kings",
+      "2 Kings",
+      "1 Chronicles",
+      "2 Chronicles",
+      "Ezra",
+      "Nehemiah",
+      "Esther",
+      "Job",
+      "Psalms",
+      "Psalm",
+      "Proverbs",
+      "Ecclesiastes",
+      "Song of Solomon",
+      "Isaiah",
+      "Jeremiah",
+      "Lamentations",
+      "Ezekiel",
+      "Daniel",
+      "Hosea",
+      "Joel",
+      "Amos",
+      "Obadiah",
+      "Jonah",
+      "Micah",
+      "Nahum",
+      "Habakkuk",
+      "Zephaniah",
+      "Haggai",
+      "Zechariah",
+      "Malachi",
+      "Matthew",
+      "Mark",
+      "Luke",
+      "John",
+      "Acts",
+      "Romans",
+      "1 Corinthians",
+      "2 Corinthians",
+      "Galatians",
+      "Ephesians",
+      "Philippians",
+      "Colossians",
+      "1 Thessalonians",
+      "2 Thessalonians",
+      "1 Timothy",
+      "2 Timothy",
+      "Titus",
+      "Philemon",
+      "Hebrews",
+      "James",
+      "1 Peter",
+      "2 Peter",
+      "1 John",
+      "2 John",
+      "3 John",
+      "Jude",
+      "Revelation",
+    ];
+
+    return validBooks.includes(bookName);
   }
 
   private getBookAbbreviation(bookName: string): string {
