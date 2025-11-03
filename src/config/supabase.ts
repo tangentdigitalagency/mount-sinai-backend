@@ -26,5 +26,14 @@ export const getSupabaseAdminClient = (): SupabaseClient => {
       autoRefreshToken: false,
       persistSession: false,
     },
+    db: {
+      schema: "public",
+    },
+    global: {
+      headers: {
+        apikey: config.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${config.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    },
   });
 };

@@ -71,11 +71,13 @@ export class StreamService {
    */
   private async getUserData(userId: string): Promise<User | null> {
     try {
+      logger.info(`Querying public.users for userId: ${userId}`);
+      
+      // Use select without maybeSingle first to debug
       const { data, error } = await this.supabase
         .from("users")
         .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+        .eq("id", userId);
 
       if (error) {
         logger.error("Error fetching user data from public.users:", {
@@ -84,16 +86,19 @@ export class StreamService {
           message: error.message,
           details: error.details,
           hint: error.hint,
+          userId,
         });
         return null;
       }
 
-      if (!data) {
-        logger.warn(`No user found in public.users for userId: ${userId}`);
+      if (!data || data.length === 0) {
+        logger.error(`No user found in public.users for userId: ${userId}`);
+        logger.error(`Query returned: data=${data}, length=${data?.length || 0}`);
         return null;
       }
 
-      return data as User;
+      logger.info(`Successfully fetched user data for userId: ${userId}, found ${data.length} row(s)`);
+      return data[0] as User;
     } catch (error) {
       logger.error("Error getting user data from public.users:", error);
       return null;
