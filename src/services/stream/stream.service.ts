@@ -67,20 +67,22 @@ export class StreamService {
 
   /**
    * Get user data from public.users table
-   * Using admin client so RLS is bypassed
+   * Using RPC function with SECURITY DEFINER to bypass RLS
    */
   private async getUserData(userId: string): Promise<User | null> {
     try {
-      logger.info(`Querying public.users for userId: ${userId}`);
+      logger.info(
+        `Querying public.users for userId: ${userId} using RPC function`
+      );
 
-      // Use select without maybeSingle first to debug
-      const { data, error } = await this.supabase
-        .from("users")
-        .select("*")
-        .eq("id", userId);
+      // Use RPC function with SECURITY DEFINER to bypass RLS
+      // This is more reliable than relying on service role policies
+      const { data, error } = await this.supabase.rpc("get_user_by_id", {
+        user_id: userId,
+      });
 
       if (error) {
-        logger.error("Error fetching user data from public.users:", {
+        logger.error("Error fetching user data via RPC:", {
           error,
           code: error.code,
           message: error.message,
@@ -94,14 +96,10 @@ export class StreamService {
       if (!data || data.length === 0) {
         logger.error(`No user found in public.users for userId: ${userId}`);
         logger.error(
-          `Query returned: data=${JSON.stringify(data)}, length=${
+          `RPC returned: data=${JSON.stringify(data)}, length=${
             data?.length || 0
-          }, error=${JSON.stringify(error)}`
+          }`
         );
-
-        // If query returns empty, it means RLS is blocking even with service role
-        // This shouldn't happen - service role should bypass RLS
-        logger.error(`RLS is blocking query even with service role key!`);
         return null;
       }
 
