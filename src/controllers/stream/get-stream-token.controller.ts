@@ -16,6 +16,7 @@ import { logger } from "../../utils/logger";
  */
 export const getStreamToken = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
+  const userEmail = req.user?.email;
 
   if (!userId) {
     throw new AppError(401, "User not authenticated");
@@ -24,7 +25,7 @@ export const getStreamToken = async (req: AuthRequest, res: Response) => {
   const streamService = new StreamService();
 
   try {
-    const result = await streamService.getOrCreateStreamToken(userId);
+    const result = await streamService.getOrCreateStreamToken(userId, userEmail);
 
     logger.info(
       `Stream token ${result.isNewUser ? "created" : "refreshed"} for user ${userId}`
