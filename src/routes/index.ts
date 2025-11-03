@@ -3,6 +3,7 @@ import { Router } from "express";
 import { exampleRoutes } from "./example.routes";
 import { notesRoutes } from "./notes.routes";
 import { aiChatRoutes } from "./ai-chat.routes";
+import { streamRoutes } from "./stream.routes";
 
 const router = Router();
 
@@ -23,6 +24,7 @@ export const configureRoutes = (app: Application): void => {
   app.use("/api/example", exampleRoutes);
   app.use("/api/notes", notesRoutes);
   app.use("/api/ai-chat", aiChatRoutes);
+  app.use("/api/stream", streamRoutes);
 
   // Add your route modules here
   // Example:
