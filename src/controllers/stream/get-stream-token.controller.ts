@@ -25,7 +25,7 @@ export const getStreamToken = async (req: AuthRequest, res: Response) => {
   const streamService = new StreamService();
 
   try {
-    const result = await streamService.getOrCreateStreamToken(userId, userEmail);
+    const result = await streamService.getOrCreateStreamToken(userId);
 
     logger.info(
       `Stream token ${result.isNewUser ? "created" : "refreshed"} for user ${userId}`

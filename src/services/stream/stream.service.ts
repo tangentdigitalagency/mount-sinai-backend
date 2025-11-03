@@ -28,27 +28,15 @@ export class StreamService {
    * Get or create Stream token for a user
    * Checks if user has been synced to Stream to avoid DAU issues
    */
-  async getOrCreateStreamToken(
-    userId: string,
-    authEmail?: string
-  ): Promise<StreamTokenResult> {
+  async getOrCreateStreamToken(userId: string): Promise<StreamTokenResult> {
     try {
-      // Get user data from public.users table (for profile data)
-      let user = await this.getUserData(userId);
+      // Get user data from public.users table
+      // User MUST exist here if they authenticated successfully
+      const user = await this.getUserData(userId);
 
-      // If user doesn't exist in public.users table, get data from auth.users
-      // (auth.users is auto-created by Supabase Auth, but public.users is separate)
       if (!user) {
-        logger.info(
-          `User ${userId} not found in public.users table, fetching from auth.users`
-        );
-        const authUser = await this.getAuthUserData(userId, authEmail);
-
-        if (!authUser) {
-          throw new Error("User not found in authentication system");
-        }
-
-        user = authUser;
+        logger.error(`User ${userId} not found in public.users table`);
+        throw new Error(`User ${userId} not found in database`);
       }
 
       // Check if user already has a Stream token record
@@ -78,7 +66,8 @@ export class StreamService {
   }
 
   /**
-   * Get user data from public.users table (extended profile)
+   * Get user data from public.users table
+   * Using admin client so RLS is bypassed
    */
   private async getUserData(userId: string): Promise<User | null> {
     try {
@@ -86,62 +75,27 @@ export class StreamService {
         .from("users")
         .select("*")
         .eq("id", userId)
-        .maybeSingle(); // Use maybeSingle() instead of single() to avoid error on no rows
+        .maybeSingle();
 
       if (error) {
-        logger.error("Error fetching user data from public.users:", error);
+        logger.error("Error fetching user data from public.users:", {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
         return null;
       }
 
-      return data as User | null;
+      if (!data) {
+        logger.warn(`No user found in public.users for userId: ${userId}`);
+        return null;
+      }
+
+      return data as User;
     } catch (error) {
       logger.error("Error getting user data from public.users:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Get user data from auth.users (basic auth data - always exists if user is authenticated)
-   */
-  private async getAuthUserData(
-    userId: string,
-    email?: string
-  ): Promise<User | null> {
-    try {
-      // Get user from auth.users using admin client
-      const { data: authUser, error } =
-        await this.supabase.auth.admin.getUserById(userId);
-
-      if (error || !authUser?.user) {
-        logger.error("Error fetching user from auth.users:", error);
-        return null;
-      }
-
-      // Convert auth.users data to User type (with nulls for profile fields)
-      const user: User = {
-        id: authUser.user.id,
-        email: authUser.user.email || email || "",
-        first_name: (authUser.user.user_metadata?.first_name as string) || null,
-        last_name: (authUser.user.user_metadata?.last_name as string) || null,
-        username: (authUser.user.user_metadata?.username as string) || null,
-        gender: null,
-        birth_date: null,
-        address1: null,
-        address2: null,
-        city: null,
-        state: null,
-        zipcode: null,
-        profile_picture_url: authUser.user.user_metadata?.avatar_url || null,
-        avatar_type: null,
-        avatar_config: null,
-        onboarding_completed: null,
-        created_at: authUser.user.created_at || null,
-        updated_at: authUser.user.updated_at || null,
-      };
-
-      return user;
-    } catch (error) {
-      logger.error("Error getting auth user data:", error);
       return null;
     }
   }
