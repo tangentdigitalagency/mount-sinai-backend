@@ -229,3 +229,162 @@ export const UserInsightsSchema = z.object({
 });
 
 export type UserInsights = z.infer<typeof UserInsightsSchema>;
+
+// ============================================================================
+// LEARNING PLANS TYPES
+// ============================================================================
+
+export const AILearningPlanSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  title: z.string(),
+  topic: z.string(),
+  description: z.string().nullable(),
+  user_level: z.enum(["beginner", "intermediate", "advanced"]),
+  total_sessions: z.number().int().positive(),
+  completed_sessions: z.number().int().nonnegative(),
+  status: z.enum(["active", "completed", "paused", "cancelled"]),
+  created_at: z.string(),
+  updated_at: z.string(),
+  completed_at: z.string().nullable(),
+});
+
+export type AILearningPlan = z.infer<typeof AILearningPlanSchema>;
+
+// Learning Sessions Types
+export const AILearningSessionSchema = z.object({
+  id: z.string().uuid(),
+  learning_plan_id: z.string().uuid(),
+  session_number: z.number().int().positive(),
+  title: z.string(),
+  objectives: z.array(z.string()),
+  content_outline: z.record(z.unknown()).nullable(),
+  is_completed: z.boolean(),
+  completed_at: z.string().nullable(),
+  notes: z.string().nullable(),
+  chat_session_id: z.string().uuid().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type AILearningSession = z.infer<typeof AILearningSessionSchema>;
+
+// User Progress Types
+export const AIUserProgressSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  metric_type: z.string(),
+  metric_value: z.record(z.unknown()),
+  recorded_at: z.string(),
+  created_at: z.string(),
+});
+
+export type AIUserProgress = z.infer<typeof AIUserProgressSchema>;
+
+// AI Goals Types
+export const AIUserGoalSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  goal_type: z.enum([
+    "daily_chat",
+    "weekly_sessions",
+    "monthly_plans",
+    "topic_mastery",
+    "custom",
+  ]),
+  goal_target: z.record(z.unknown()),
+  current_progress: z.record(z.unknown()),
+  status: z.enum(["active", "completed", "failed", "paused"]),
+  start_date: z.string(),
+  end_date: z.string().nullable(),
+  completed_at: z.string().nullable(),
+  reward_xp: z.number().int().nonnegative(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type AIUserGoal = z.infer<typeof AIUserGoalSchema>;
+
+// ============================================================================
+// API REQUEST/RESPONSE SCHEMAS
+// ============================================================================
+
+export const CreateLearningPlanSchema = z.object({
+  topic: z.string().min(1).max(255),
+  user_level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+  total_sessions: z.number().int().positive().optional(),
+});
+
+export type CreateLearningPlan = z.infer<typeof CreateLearningPlanSchema>;
+
+export const UpdateLearningPlanSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  status: z.enum(["active", "completed", "paused", "cancelled"]).optional(),
+});
+
+export type UpdateLearningPlan = z.infer<typeof UpdateLearningPlanSchema>;
+
+export const UpdateLearningSessionSchema = z.object({
+  is_completed: z.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+export type UpdateLearningSession = z.infer<typeof UpdateLearningSessionSchema>;
+
+export const CreateAIGoalSchema = z.object({
+  goal_type: z.enum([
+    "daily_chat",
+    "weekly_sessions",
+    "monthly_plans",
+    "topic_mastery",
+    "custom",
+  ]),
+  goal_target: z.record(z.unknown()),
+  end_date: z.string().optional(),
+  reward_xp: z.number().int().nonnegative().optional(),
+});
+
+export type CreateAIGoal = z.infer<typeof CreateAIGoalSchema>;
+
+// ============================================================================
+// DASHBOARD TYPES
+// ============================================================================
+
+export const DashboardSummarySchema = z.object({
+  user: z.object({
+    firstName: z.string(),
+    level: z.number(),
+    xp: z.number(),
+    xpToNextLevel: z.number(),
+    streak: z.number(),
+  }),
+  learningPlans: z.object({
+    active: z.number(),
+    completed: z.number(),
+    totalSessions: z.number(),
+    completedSessions: z.number(),
+  }),
+  recentActivity: z.array(
+    z.object({
+      type: z.string(),
+      timestamp: z.string(),
+      data: z.record(z.unknown()),
+    })
+  ),
+  achievements: z.object({
+    total: z.number(),
+    recent: z.array(z.unknown()),
+  }),
+  goals: z.object({
+    active: z.array(AIUserGoalSchema),
+    progress: z.record(z.unknown()),
+  }),
+  stats: z.object({
+    totalChatMessages: z.number(),
+    totalPlansCompleted: z.number(),
+    favoriteTopics: z.array(z.string()),
+  }),
+});
+
+export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;

@@ -23,6 +23,14 @@ import {
   updateLearningProfile,
   deleteLearningProfile,
 } from "../controllers/ai-chat/learning-profile.controller";
+import {
+  createLearningPlan,
+  listLearningPlans,
+  getLearningPlan,
+  updateLearningPlan,
+  deleteLearningPlan,
+  completeSession,
+} from "../controllers/ai-chat/learning-plan";
 
 // Import schemas
 import {
@@ -30,6 +38,9 @@ import {
   UpdateChatSessionSchema,
   SendMessageSchema,
   UpdateLearningProfileSchema,
+  CreateLearningPlanSchema,
+  UpdateLearningPlanSchema,
+  UpdateLearningSessionSchema,
 } from "../types/ai-chat.types";
 
 const router = Router();
@@ -158,6 +169,79 @@ router.delete(
   learningProfileRateLimit,
   authenticateUser,
   asyncHandler(deleteLearningProfile)
+);
+
+// ============================================================================
+// LEARNING PLAN ROUTES
+// ============================================================================
+
+/**
+ * POST /api/ai-chat/learning-plans
+ * Create a new AI learning plan
+ */
+router.post(
+  "/learning-plans",
+  generalRateLimit,
+  authenticateUser,
+  validate(CreateLearningPlanSchema),
+  asyncHandler(createLearningPlan)
+);
+
+/**
+ * GET /api/ai-chat/learning-plans
+ * List user's learning plans
+ */
+router.get(
+  "/learning-plans",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(listLearningPlans)
+);
+
+/**
+ * GET /api/ai-chat/learning-plans/:id
+ * Get a specific learning plan with sessions
+ */
+router.get(
+  "/learning-plans/:id",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(getLearningPlan)
+);
+
+/**
+ * PATCH /api/ai-chat/learning-plans/:id
+ * Update a learning plan
+ */
+router.patch(
+  "/learning-plans/:id",
+  generalRateLimit,
+  authenticateUser,
+  validate(UpdateLearningPlanSchema),
+  asyncHandler(updateLearningPlan)
+);
+
+/**
+ * DELETE /api/ai-chat/learning-plans/:id
+ * Delete a learning plan
+ */
+router.delete(
+  "/learning-plans/:id",
+  generalRateLimit,
+  authenticateUser,
+  asyncHandler(deleteLearningPlan)
+);
+
+/**
+ * POST /api/ai-chat/learning-plans/:planId/sessions/:sessionId/complete
+ * Complete a learning session
+ */
+router.post(
+  "/learning-plans/:planId/sessions/:sessionId/complete",
+  generalRateLimit,
+  authenticateUser,
+  validate(UpdateLearningSessionSchema),
+  asyncHandler(completeSession)
 );
 
 export { router as aiChatRoutes };

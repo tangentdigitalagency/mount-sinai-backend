@@ -7,12 +7,13 @@ import type { UserContext } from "../../types/ai-chat.types";
  */
 export class ConversationalAIService {
   /**
-   * Generate engaging, conversational response
+   * Add conversational wrapper to existing AI response
    */
-  async generateEngagingResponse(
-    userMessage: string,
+  async addConversationalWrapper(
+    aiResponse: string,
     userContext: UserContext,
-    conversationHistory: any[]
+    userMessage: string,
+    _conversationHistory: any[]
   ): Promise<string> {
     try {
       // 1. Analyze user's emotional state
@@ -21,24 +22,42 @@ export class ConversationalAIService {
       // 2. Determine conversation tone
       const tone = this.determineTone(emotionalState, userContext);
 
-      // 3. Generate personalized response
-      const response = await this.generatePersonalizedResponse(
-        userMessage,
-        userContext,
-        tone,
-        conversationHistory
-      );
-
-      // 4. Add conversational elements
+      // 3. Add conversational elements to the existing response
       return this.addConversationalElements(
-        response,
+        aiResponse,
         userContext,
-        emotionalState
+        emotionalState,
+        tone
       );
     } catch (error) {
-      logger.error("Error generating engaging response:", error);
-      throw error;
+      logger.error("Error adding conversational wrapper:", error);
+      // Return original response if enhancement fails
+      return aiResponse;
     }
+  }
+
+  /**
+   * Build conversational prompt addition for system prompt
+   */
+  buildConversationalPromptAddition(userContext: UserContext): string {
+    const firstName = userContext.userProfile?.first_name || "friend";
+    const currentBook = userContext.currentBook || "your current reading";
+    const streak = (userContext.readingStats as any)?.current_streak || 0;
+
+    return `## CONVERSATIONAL PERSONALITY
+- You are speaking with ${firstName}
+- Use their name naturally (2-3 times per response)
+- Start with warm greetings: "Hey ${firstName}!", "Great question, ${firstName}!"
+- End with engaging follow-up questions
+- Show genuine enthusiasm and encouragement
+- Reference their reading progress and achievements when relevant
+- Current context: ${firstName} is reading ${currentBook}${
+      streak > 0 ? ` with a ${streak}-day streak` : ""
+    }
+- Be conversational, not robotic or academic
+- Ask follow-up questions to keep the conversation engaging
+- Celebrate their progress and insights
+- Show genuine interest in their spiritual journey`;
   }
 
   /**
@@ -200,99 +219,26 @@ What do you think? Ready to start with Session 1? I'm here to guide you every st
   }
 
   /**
-   * Generate personalized response based on tone and context
-   */
-  private async generatePersonalizedResponse(
-    userMessage: string,
-    userContext: UserContext,
-    tone: string,
-    _conversationHistory: any[]
-  ): Promise<string> {
-    const firstName =
-      (userContext.userProfile?.first_name as string) || "friend";
-
-    // Base response from existing AI system
-    const baseResponse = await this.getBaseAIResponse(userMessage, userContext);
-
-    // Add conversational elements based on tone
-    switch (tone) {
-      case "enthusiastic":
-        return this.addEnthusiasm(baseResponse, firstName);
-      case "gentle":
-        return this.addGentleness(baseResponse, firstName);
-      case "encouraging":
-        return this.addEncouragement(baseResponse, firstName);
-      case "scholarly":
-        return this.addScholarlyTone(baseResponse, firstName);
-      case "pastoral":
-        return this.addPastoralCare(baseResponse, firstName);
-      default:
-        return baseResponse;
-    }
-  }
-
-  /**
    * Add conversational elements to response
    */
   private addConversationalElements(
     response: string,
     userContext: UserContext,
-    emotionalState: any
+    _emotionalState: any,
+    _tone?: string
   ): string {
-    const firstName =
-      (userContext.userProfile?.first_name as string) || "friend";
+    // For now, just return the response with minimal enhancement
+    // The main conversational personality is added via the system prompt
+    // This method can be enhanced later to add more dynamic elements
 
-    // Add personalized greeting
-    const greeting = this.getPersonalizedGreeting(firstName, userContext);
-
-    // Add encouragement
-    const encouragement = this.getEncouragement(emotionalState, firstName);
-
-    // Add follow-up question
-    const followUp = this.getFollowUpQuestion(userContext);
-
-    // Combine elements
-    return `${greeting}\n\n${response}\n\n${encouragement}\n\n${followUp}`;
-  }
-
-  /**
-   * Get personalized greeting
-   */
-  private getPersonalizedGreeting(
-    firstName: string,
-    userContext: UserContext
-  ): string {
-    const currentBook = userContext.currentBook || "your current reading";
-    const streak = (userContext.readingStats as any)?.currentStreak || 0;
-
-    const greetings = [
-      `Hey ${firstName}! Great to see you again! 👋`,
-      `Hi ${firstName}! I've been thinking about our last conversation...`,
-      `Welcome back, ${firstName}! Ready to dive deeper?`,
-      `Hey ${firstName}! How's your study of ${currentBook} going?`,
-      `Hi ${firstName}! I'm excited to continue our journey together!`,
-    ];
-
-    if (streak > 0) {
-      return `Hey ${firstName}! I see you're on a ${streak}-day streak - that's amazing! 🔥`;
+    // Add a simple follow-up question if the response doesn't already have one
+    const hasQuestion = response.includes("?");
+    if (!hasQuestion) {
+      const followUp = this.getFollowUpQuestion(userContext);
+      return `${response}\n\n${followUp}`;
     }
 
-    return greetings[Math.floor(Math.random() * greetings.length)];
-  }
-
-  /**
-   * Get encouragement based on emotional state
-   */
-  private getEncouragement(emotionalState: any, firstName: string): string {
-    if (emotionalState.frustration > 0.5) {
-      return `Don't worry, ${firstName}! I'm here to help you understand this step by step. 🤗`;
-    } else if (emotionalState.excitement > 0.5) {
-      return `I love your enthusiasm, ${firstName}! Your curiosity is inspiring! 🌟`;
-    } else if (emotionalState.confusion > 0.5) {
-      return `I can see you're really thinking about this, ${firstName}! That's exactly what we want! 🤔`;
-    } else {
-      return `I love your heart for learning, ${firstName}! You're asking exactly the right questions! 💡`;
-    }
+    return response;
   }
 
   /**
@@ -313,41 +259,6 @@ What do you think? Ready to start with Session 1? I'm here to guide you every st
     ];
 
     return followUps[Math.floor(Math.random() * followUps.length)];
-  }
-
-  /**
-   * Add enthusiasm to response
-   */
-  private addEnthusiasm(response: string, firstName: string): string {
-    return `I'm SO excited you're asking about this, ${firstName}! This is going to be amazing! 🚀\n\n${response}\n\nReady to dive deeper? I can't wait to explore this with you! 🤗`;
-  }
-
-  /**
-   * Add gentleness to response
-   */
-  private addGentleness(response: string, firstName: string): string {
-    return `I understand this might feel overwhelming, ${firstName}. Let me walk you through this gently, step by step. 🤗\n\n${response}\n\nTake your time with this, ${firstName}. I'm here to help you understand. 💙`;
-  }
-
-  /**
-   * Add encouragement to response
-   */
-  private addEncouragement(response: string, firstName: string): string {
-    return `You're doing great, ${firstName}! I can see you're really growing in your understanding! 🌟\n\n${response}\n\nKeep asking questions, ${firstName}! That's how we learn and grow! 💪`;
-  }
-
-  /**
-   * Add scholarly tone to response
-   */
-  private addScholarlyTone(response: string, firstName: string): string {
-    return `Excellent question, ${firstName}! This is a fascinating topic that has been studied for centuries. 📚\n\n${response}\n\nWhat aspects of this would you like to explore further, ${firstName}?`;
-  }
-
-  /**
-   * Add pastoral care to response
-   */
-  private addPastoralCare(response: string, firstName: string): string {
-    return `I'm so glad you're exploring this, ${firstName}. This is such an important part of your faith journey. 🙏\n\n${response}\n\nHow is this speaking to your heart, ${firstName}? Let's pray about this together. 💙`;
   }
 
   /**
@@ -381,17 +292,5 @@ What do you think? Ready to start with Session 1? I'm here to guide you every st
     const messageWords = message.toLowerCase().split(" ");
     return words.filter((word) => messageWords.includes(word.toLowerCase()))
       .length;
-  }
-
-  /**
-   * Get base AI response (placeholder - integrate with existing AI system)
-   */
-  private async getBaseAIResponse(
-    _userMessage: string,
-    _userContext: UserContext
-  ): Promise<string> {
-    // This would integrate with your existing AI chat service
-    // For now, return a placeholder
-    return "This is where the base AI response would go. In production, this would call your existing AI chat service.";
   }
 }

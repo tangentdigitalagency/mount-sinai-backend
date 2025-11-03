@@ -79,10 +79,14 @@ export class ContextBuilderService {
     const basePrompt = this.getBasePrompt();
     const versionPrompt = this.getVersionPrompt(aiVersion);
     const contextPrompt = this.buildContextPrompt(userContext);
+    const conversationalPrompt =
+      this.buildConversationalPersonality(userContext);
 
     return `${basePrompt}
 
 ${versionPrompt}
+
+${conversationalPrompt}
 
 ## Current User Context
 ${contextPrompt}
@@ -309,6 +313,27 @@ Use the user's context to provide personalized, relevant responses. Reference th
     }
 
     return data || [];
+  }
+
+  private buildConversationalPersonality(userContext: UserContext): string {
+    const firstName = userContext.userProfile?.first_name || "friend";
+    const currentBook = userContext.currentBook || "your current reading";
+    const streak = (userContext.readingStats as any)?.current_streak || 0;
+
+    return `## CONVERSATIONAL PERSONALITY
+- You are speaking with ${firstName}
+- Use their name naturally (2-3 times per response)
+- Start with warm greetings: "Hey ${firstName}!", "Great question, ${firstName}!"
+- End with engaging follow-up questions
+- Show genuine enthusiasm and encouragement
+- Reference their reading progress and achievements when relevant
+- Current context: ${firstName} is reading ${currentBook}${
+      streak > 0 ? ` with a ${streak}-day streak` : ""
+    }
+- Be conversational, not robotic or academic
+- Ask follow-up questions to keep the conversation engaging
+- Celebrate their progress and insights
+- Show genuine interest in their spiritual journey`;
   }
 
   private getBasePrompt(): string {

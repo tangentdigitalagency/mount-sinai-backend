@@ -11,6 +11,8 @@ import type {
   AIVersion,
 } from "../../types/ai-chat.types";
 import { TheologicalSourcesService } from "./theological-sources.service";
+import { ConversationalAIService } from "./conversational-ai.service";
+import { ProgressTrackingService } from "./progress-tracking.service";
 
 /**
  * Main AI chat service for OpenAI integration and message handling
@@ -20,6 +22,8 @@ export class ChatService {
   private supabase = getSupabaseClient();
   private contextBuilder = new ContextBuilderService();
   private theologicalSources = new TheologicalSourcesService();
+  private conversationalAI = new ConversationalAIService();
+  private progressTracker = new ProgressTrackingService();
 
   constructor() {
     this.openai = getOpenAIClient();
@@ -56,9 +60,14 @@ export class ChatService {
         userContext
       );
 
+      // Add conversational personality to system prompt
+      const conversationalPrompt =
+        this.conversationalAI.buildConversationalPromptAddition(userContext);
+      const enhancedSystemPrompt = systemPrompt + "\n\n" + conversationalPrompt;
+
       // Prepare messages for OpenAI
       const messages = this.prepareOpenAIMessages(
-        systemPrompt,
+        enhancedSystemPrompt,
         conversationHistory.messages,
         userMessage
       );
@@ -76,9 +85,18 @@ export class ChatService {
       const aiResponse = response.choices[0]?.message?.content || "";
       const tokensUsed = response.usage?.total_tokens || 0;
 
+      // Add conversational wrapper to the response
+      const engagingResponse =
+        await this.conversationalAI.addConversationalWrapper(
+          aiResponse,
+          userContext,
+          userMessage,
+          conversationHistory.messages
+        );
+
       // Process and format the response
       const { metadata, formattedContent } = await this.processAIResponse(
-        aiResponse,
+        engagingResponse,
         session.ai_version
       );
 
@@ -86,22 +104,47 @@ export class ChatService {
       await this.saveMessages(
         sessionId,
         userMessage,
-        aiResponse,
+        engagingResponse,
         metadata,
         formattedContent,
         tokensUsed
       );
+
+      // Check for learning intent and add suggestion to metadata
+      const learningIntentDetected = await this.detectLearningIntent(
+        userMessage,
+        engagingResponse
+      );
+      if (learningIntentDetected) {
+        const extractedTopic = this.extractTopicFromMessage(userMessage);
+        // Add suggested action to metadata (extend the type if needed)
+        (metadata as any).suggestedAction = {
+          type: "create_learning_plan",
+          topic: extractedTopic,
+          message:
+            "Would you like me to create a personalized study plan for this topic?",
+        };
+      }
 
       // Extract learning insights asynchronously
       this.extractLearningInsightsAsync(
         session.user_id,
         conversationHistory.messages,
         userMessage,
-        aiResponse
+        engagingResponse
+      );
+
+      // Track progress asynchronously
+      this.trackProgressAsync(
+        session.user_id,
+        userMessage,
+        engagingResponse,
+        conversationHistory.messages,
+        userContext
       );
 
       return {
-        aiResponse,
+        aiResponse: engagingResponse,
         metadata,
         formattedContent,
         tokensUsed,
@@ -379,14 +422,15 @@ export class ChatService {
   }
 
   private getBaseGreetingPrompt(): string {
-    return `You are a helpful biblical AI assistant. Generate a warm, personalized greeting that:
-1. Welcomes the user to the chat
-2. Mentions their current reading if provided
-3. Asks how you can help with their biblical study
-4. Sets the tone for the conversation
-5. Keeps it concise but encouraging
+    return `You are a warm, engaging, and deeply personal Bible study companion. Generate a conversational greeting that:
+1. Welcomes the user by name with enthusiasm
+2. References their current reading progress and achievements
+3. Shows genuine interest in their spiritual journey
+4. Asks how you can help with their biblical study
+5. Uses a warm, friendly tone with their first name
+6. Keeps it conversational and encouraging
 
-Use a friendly, scholarly tone that reflects your expertise while being approachable.`;
+Be personal, warm, and engaging - like talking to a trusted friend who genuinely cares about their growth.`;
   }
 
   private extractVerseReferences(text: string): string[] {
@@ -689,5 +733,98 @@ Use a friendly, scholarly tone that reflects your expertise while being approach
     }
 
     return sections;
+  }
+
+  /**
+   * Detect if user wants to learn about a topic
+   */
+  private async detectLearningIntent(
+    userMessage: string,
+    _aiResponse: string
+  ): Promise<boolean> {
+    const learningPhrases = [
+      "want to learn",
+      "teach me",
+      "help me understand",
+      "explain to me",
+      "study about",
+      "know more about",
+      "learn about",
+      "can you teach",
+      "i want to study",
+      "help me study",
+      "i need to understand",
+      "explain more about",
+      "tell me about",
+      "i want to know",
+      "can you help me learn",
+    ];
+
+    const message = userMessage.toLowerCase();
+    return learningPhrases.some((phrase) => message.includes(phrase));
+  }
+
+  /**
+   * Extract topic from user message
+   */
+  private extractTopicFromMessage(userMessage: string): string {
+    // Simple topic extraction - look for common patterns
+    const patterns = [
+      /(?:about|on|regarding)\s+([^.!?]+)/i,
+      /(?:learn|study|understand|know)\s+(?:about|more\s+about)\s+([^.!?]+)/i,
+      /(?:teach\s+me|help\s+me\s+understand)\s+([^.!?]+)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = userMessage.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+
+    // Fallback: return first few words after common learning phrases
+    const learningWords = ["about", "on", "regarding"];
+    for (const word of learningWords) {
+      const index = userMessage.toLowerCase().indexOf(word);
+      if (index !== -1) {
+        const afterWord = userMessage.substring(index + word.length).trim();
+        const firstSentence = afterWord.split(/[.!?]/)[0];
+        if (firstSentence.length > 0) {
+          return firstSentence.trim();
+        }
+      }
+    }
+
+    return "this topic";
+  }
+
+  /**
+   * Track user progress asynchronously
+   */
+  private async trackProgressAsync(
+    userId: string,
+    userMessage: string,
+    aiResponse: string,
+    conversationHistory: any[],
+    _userContext: any
+  ): Promise<void> {
+    try {
+      const sessionData = {
+        userMessage,
+        aiResponse,
+        conversationHistory,
+      };
+
+      // Track different types of progress
+      await Promise.all([
+        this.progressTracker.trackKnowledgeGrowth(userId, sessionData),
+        this.progressTracker.trackApplicationGrowth(userId, sessionData),
+        this.progressTracker.trackStudyStreak(userId),
+      ]);
+
+      logger.info(`Progress tracked for user ${userId}`);
+    } catch (error) {
+      logger.error("Error tracking progress:", error);
+    }
   }
 }
