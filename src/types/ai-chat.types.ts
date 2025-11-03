@@ -258,7 +258,7 @@ export const AILearningSessionSchema = z.object({
   session_number: z.number().int().positive(),
   title: z.string(),
   objectives: z.array(z.string()),
-  content_outline: z.record(z.unknown()).nullable(),
+  content_outline: z.record(z.string(), z.unknown()).nullable(),
   is_completed: z.boolean(),
   completed_at: z.string().nullable(),
   notes: z.string().nullable(),
@@ -274,7 +274,7 @@ export const AIUserProgressSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
   metric_type: z.string(),
-  metric_value: z.record(z.unknown()),
+  metric_value: z.record(z.string(), z.unknown()),
   recorded_at: z.string(),
   created_at: z.string(),
 });
@@ -292,8 +292,8 @@ export const AIUserGoalSchema = z.object({
     "topic_mastery",
     "custom",
   ]),
-  goal_target: z.record(z.unknown()),
-  current_progress: z.record(z.unknown()),
+  goal_target: z.record(z.string(), z.unknown()),
+  current_progress: z.record(z.string(), z.unknown()),
   status: z.enum(["active", "completed", "failed", "paused"]),
   start_date: z.string(),
   end_date: z.string().nullable(),
@@ -340,7 +340,7 @@ export const CreateAIGoalSchema = z.object({
     "topic_mastery",
     "custom",
   ]),
-  goal_target: z.record(z.unknown()),
+  goal_target: z.record(z.string(), z.unknown()),
   end_date: z.string().optional(),
   reward_xp: z.number().int().nonnegative().optional(),
 });
@@ -369,7 +369,7 @@ export const DashboardSummarySchema = z.object({
     z.object({
       type: z.string(),
       timestamp: z.string(),
-      data: z.record(z.unknown()),
+      data: z.record(z.string(), z.unknown()),
     })
   ),
   achievements: z.object({
@@ -378,7 +378,7 @@ export const DashboardSummarySchema = z.object({
   }),
   goals: z.object({
     active: z.array(AIUserGoalSchema),
-    progress: z.record(z.unknown()),
+    progress: z.record(z.string(), z.unknown()),
   }),
   stats: z.object({
     totalChatMessages: z.number(),

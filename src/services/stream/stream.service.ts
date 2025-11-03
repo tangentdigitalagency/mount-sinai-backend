@@ -120,7 +120,7 @@ export class StreamService {
 
     try {
       // Upsert user to Stream (this creates the user if they don't exist)
-      const response = await streamClient.upsertUser({
+      await streamClient.upsertUser({
         id: streamUserId,
         ...streamUserData,
       });
@@ -136,7 +136,6 @@ export class StreamService {
       return {
         token,
         user: {
-          id: streamUserId,
           ...streamUserData,
         },
         isNewUser: true,
@@ -186,7 +185,6 @@ export class StreamService {
       return {
         token,
         user: {
-          id: streamUserId,
           ...streamUserData,
         },
         isNewUser: false,

@@ -109,7 +109,7 @@ export class ProgressTrackingService {
     userContext: UserContext
   ): Promise<string> {
     try {
-      const firstName = userContext.userProfile?.first_name || "friend";
+      const firstName = (userContext.userProfile?.first_name as string | undefined) || "friend";
       const recentProgress = await this.getRecentProgress(userId);
       const achievements = await this.getRecentAchievements(userId);
 
@@ -145,7 +145,7 @@ Make it warm, specific, and motivating. Reference their actual progress and achi
     } catch (error) {
       logger.error("Error generating encouragement:", error);
       return this.getDefaultEncouragement(
-        userContext.userProfile?.first_name || "friend"
+        (userContext.userProfile?.first_name as string | undefined) || "friend"
       );
     }
   }
@@ -329,7 +329,7 @@ Make it warm, specific, and motivating. Reference their actual progress and achi
     return count || 0;
   }
 
-  private async getRecentAchievements(userId: string): Promise<any[]> {
+  private async getRecentAchievements(_userId: string): Promise<any[]> {
     // This would integrate with your existing achievements system
     // For now, return empty array
     return [];

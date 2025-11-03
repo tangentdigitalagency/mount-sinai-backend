@@ -5,7 +5,6 @@ import type {
   UserContext,
   AILearningPlan,
   AILearningSession,
-  CreateLearningPlan,
   UpdateLearningPlan,
   UpdateLearningSession,
 } from "../../types/ai-chat.types";
@@ -233,7 +232,7 @@ export class LearningJourneyService {
   ): Promise<AILearningSession> {
     try {
       // Verify the session belongs to the user
-      const { data: session, error: sessionError } = await this.supabase
+      const { data: _session, error: sessionError } = await this.supabase
         .from("ai_learning_sessions")
         .select(
           `
