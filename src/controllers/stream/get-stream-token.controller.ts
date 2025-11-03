@@ -7,7 +7,7 @@ import { logger } from "../../utils/logger";
 
 /**
  * Get or create Stream Chat token for authenticated user
- * 
+ *
  * This endpoint:
  * 1. Checks if user has been synced to Stream (to avoid DAU issues)
  * 2. If not, syncs user to Stream and creates token
@@ -16,7 +16,6 @@ import { logger } from "../../utils/logger";
  */
 export const getStreamToken = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
-  const userEmail = req.user?.email;
 
   if (!userId) {
     throw new AppError(401, "User not authenticated");
@@ -28,7 +27,9 @@ export const getStreamToken = async (req: AuthRequest, res: Response) => {
     const result = await streamService.getOrCreateStreamToken(userId);
 
     logger.info(
-      `Stream token ${result.isNewUser ? "created" : "refreshed"} for user ${userId}`
+      `Stream token ${
+        result.isNewUser ? "created" : "refreshed"
+      } for user ${userId}`
     );
 
     const response: ApiSuccessResponse<{
@@ -68,4 +69,3 @@ export const getStreamToken = async (req: AuthRequest, res: Response) => {
     throw new AppError(500, "Failed to get Stream Chat token");
   }
 };
-
