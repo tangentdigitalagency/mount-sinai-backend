@@ -120,10 +120,8 @@ export class StreamService {
 
     try {
       // Upsert user to Stream (this creates the user if they don't exist)
-      await streamClient.upsertUser({
-        id: streamUserId,
-        ...streamUserData,
-      });
+      // streamUserData already includes id, so we just spread it
+      await streamClient.upsertUser(streamUserData);
 
       logger.info(`Successfully synced user ${streamUserId} to Stream`);
 
@@ -171,10 +169,8 @@ export class StreamService {
     try {
       // Update user data in Stream (in case profile changed)
       const streamUserData = this.buildStreamUserData(user);
-      await streamClient.upsertUser({
-        id: streamUserId,
-        ...streamUserData,
-      });
+      // streamUserData already includes id, so we just spread it
+      await streamClient.upsertUser(streamUserData);
 
       // Generate fresh token
       const token = streamClient.createToken(streamUserId);
