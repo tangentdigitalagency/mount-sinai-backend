@@ -72,7 +72,7 @@ export class StreamService {
   private async getUserData(userId: string): Promise<User | null> {
     try {
       logger.info(`Querying public.users for userId: ${userId}`);
-      
+
       // Use select without maybeSingle first to debug
       const { data, error } = await this.supabase
         .from("users")
@@ -93,11 +93,21 @@ export class StreamService {
 
       if (!data || data.length === 0) {
         logger.error(`No user found in public.users for userId: ${userId}`);
-        logger.error(`Query returned: data=${data}, length=${data?.length || 0}`);
+        logger.error(
+          `Query returned: data=${JSON.stringify(data)}, length=${
+            data?.length || 0
+          }, error=${JSON.stringify(error)}`
+        );
+
+        // If query returns empty, it means RLS is blocking even with service role
+        // This shouldn't happen - service role should bypass RLS
+        logger.error(`RLS is blocking query even with service role key!`);
         return null;
       }
 
-      logger.info(`Successfully fetched user data for userId: ${userId}, found ${data.length} row(s)`);
+      logger.info(
+        `Successfully fetched user data for userId: ${userId}, found ${data.length} row(s)`
+      );
       return data[0] as User;
     } catch (error) {
       logger.error("Error getting user data from public.users:", error);
