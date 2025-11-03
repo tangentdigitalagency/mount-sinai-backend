@@ -115,23 +115,28 @@ export class StreamService {
 
   /**
    * Check if user has a Stream token record
+   * Using RPC function with SECURITY DEFINER to bypass RLS
    */
   private async getStreamTokenRecord(userId: string) {
     try {
-      const { data, error } = await this.supabase
-        .from("stream_user_tokens")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("is_active", true)
-        .single();
+      const { data, error } = await this.supabase.rpc(
+        "get_stream_token_record",
+        {
+          p_user_id: userId,
+        }
+      );
 
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 is "not found" error, which is expected for new users
-        logger.error("Error fetching Stream token record:", error);
+      if (error) {
+        logger.error("Error fetching Stream token record via RPC:", error);
         return null;
       }
 
-      return data;
+      // RPC returns an array, so get first result if exists
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      return data[0];
     } catch (error) {
       logger.error("Error getting Stream token record:", error);
       return null;
@@ -158,16 +163,9 @@ export class StreamService {
       // Generate token
       const token = streamClient.createToken(streamUserId);
 
-      // Create token record in database (non-blocking - don't fail if RLS blocks)
-      try {
-        await this.createTokenRecord(user.id, streamUserId);
-      } catch (recordError) {
-        // Log error but don't fail - token is already created successfully
-        logger.warn(
-          `Failed to create token record (non-critical):`,
-          recordError
-        );
-      }
+      // Create token record in database
+      // This should only be called when no token record exists
+      await this.createTokenRecord(user.id, streamUserId);
 
       return {
         token,
