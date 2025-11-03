@@ -158,8 +158,16 @@ export class StreamService {
       // Generate token
       const token = streamClient.createToken(streamUserId);
 
-      // Create token record in database
-      await this.createTokenRecord(user.id, streamUserId);
+      // Create token record in database (non-blocking - don't fail if RLS blocks)
+      try {
+        await this.createTokenRecord(user.id, streamUserId);
+      } catch (recordError) {
+        // Log error but don't fail - token is already created successfully
+        logger.warn(
+          `Failed to create token record (non-critical):`,
+          recordError
+        );
+      }
 
       return {
         token,
@@ -261,20 +269,23 @@ export class StreamService {
 
   /**
    * Create token record in database
+   * Using RPC function with SECURITY DEFINER to bypass RLS
    */
   private async createTokenRecord(userId: string, streamUserId: string) {
     try {
-      const { error } = await this.supabase.from("stream_user_tokens").insert({
-        user_id: userId,
-        stream_user_id: streamUserId,
-        token_issued_at: new Date().toISOString(),
-        last_token_refreshed_at: new Date().toISOString(),
-        is_active: true,
-      });
+      const { data, error } = await this.supabase.rpc(
+        "create_stream_token_record",
+        {
+          p_user_id: userId,
+          p_stream_user_id: streamUserId,
+        }
+      );
 
       if (error) {
-        logger.error("Error creating token record:", error);
+        logger.error("Error creating token record via RPC:", error);
         // Don't throw - token generation succeeded, DB record is just metadata
+      } else {
+        logger.info(`Token record created with id: ${data}`);
       }
     } catch (error) {
       logger.error("Error creating token record:", error);
@@ -284,19 +295,16 @@ export class StreamService {
 
   /**
    * Update token record with refresh timestamp
+   * Using RPC function with SECURITY DEFINER to bypass RLS
    */
   private async updateTokenRecord(userId: string) {
     try {
-      const { error } = await this.supabase
-        .from("stream_user_tokens")
-        .update({
-          last_token_refreshed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
+      const { error } = await this.supabase.rpc("update_stream_token_record", {
+        p_user_id: userId,
+      });
 
       if (error) {
-        logger.error("Error updating token record:", error);
+        logger.error("Error updating token record via RPC:", error);
         // Don't throw - token generation succeeded, DB record is just metadata
       }
     } catch (error) {

@@ -72,3 +72,60 @@ $$;
 COMMENT ON FUNCTION get_user_by_id IS 
   'Get user by ID, bypasses RLS using SECURITY DEFINER for backend operations';
 
+-- RPC Function: Create stream token record (bypasses RLS using SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION create_stream_token_record(
+  p_user_id UUID,
+  p_stream_user_id TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_id UUID;
+BEGIN
+  INSERT INTO stream_user_tokens (
+    user_id,
+    stream_user_id,
+    token_issued_at,
+    last_token_refreshed_at,
+    is_active
+  )
+  VALUES (
+    p_user_id,
+    p_stream_user_id,
+    NOW(),
+    NOW(),
+    true
+  )
+  RETURNING id INTO v_id;
+  
+  RETURN v_id;
+END;
+$$;
+
+COMMENT ON FUNCTION create_stream_token_record IS 
+  'Create stream token record, bypasses RLS using SECURITY DEFINER for backend operations';
+
+-- RPC Function: Update stream token record (bypasses RLS using SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION update_stream_token_record(
+  p_user_id UUID
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE stream_user_tokens
+  SET 
+    last_token_refreshed_at = NOW(),
+    updated_at = NOW()
+  WHERE user_id = p_user_id;
+END;
+$$;
+
+COMMENT ON FUNCTION update_stream_token_record IS 
+  'Update stream token record refresh timestamp, bypasses RLS using SECURITY DEFINER for backend operations';
+
