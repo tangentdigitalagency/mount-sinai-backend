@@ -51,6 +51,13 @@ CREATE POLICY "Authenticated users can manage their own notifications"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- RLS Policy: Service role can manage all notifications (for backend operations like webhooks)
+CREATE POLICY "Service role can manage all notifications"
+  ON notifications
+  FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_notifications_updated_at()
 RETURNS TRIGGER AS $$

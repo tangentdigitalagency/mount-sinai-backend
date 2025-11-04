@@ -30,33 +30,37 @@ export class NotificationService {
 
   /**
    * Create a notification for a user
+   * Uses RPC function with SECURITY DEFINER to bypass RLS
    */
   async createNotification(params: CreateNotificationParams) {
     try {
-      const { data, error } = await this.supabase
-        .from("notifications")
-        .insert({
-          user_id: params.user_id,
-          title: params.title,
-          message: params.message,
-          link: params.link || null,
-          type: params.type || "info",
-          priority: params.priority || "normal",
-          icon: params.icon || null,
-          metadata: params.metadata || null,
-        })
-        .select()
-        .single();
+      // Use RPC function with SECURITY DEFINER to bypass RLS
+      // This is more reliable than relying on service role policies
+      const { data, error } = await this.supabase.rpc("create_notification", {
+        p_user_id: params.user_id,
+        p_title: params.title,
+        p_message: params.message,
+        p_link: params.link || null,
+        p_type: params.type || "info",
+        p_priority: params.priority || "normal",
+        p_icon: params.icon || null,
+        p_metadata: params.metadata || null,
+      });
 
       if (error) {
-        logger.error("Error creating notification:", error);
+        logger.error("Error creating notification via RPC:", error);
         throw new Error(`Failed to create notification: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        logger.error("RPC function returned no data");
+        throw new Error("Failed to create notification: no data returned");
       }
 
       logger.info(
         `Notification created for user ${params.user_id}: ${params.title}`
       );
-      return data;
+      return data[0];
     } catch (error) {
       logger.error("Error in createNotification:", error);
       throw error;
