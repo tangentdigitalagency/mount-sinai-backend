@@ -18,20 +18,19 @@ import { config } from "../../config/environment";
 export const handleStreamWebhook = async (req: Request, res: Response) => {
   try {
     // Verify webhook signature (important for security)
-    // Note: Stream sends signature in x-signature header
-    // If signature verification is optional, we can skip it for now
-    // but it's recommended to enable it in production
+    // Note: Stream uses your STREAM_API_SECRET to sign webhooks (not a separate webhook secret)
+    // Stream sends signature in x-signature header
     const signature = req.headers["x-signature"] as string;
 
-    if (config.STREAM_WEBHOOK_SECRET && signature) {
+    if (config.STREAM_API_SECRET && signature) {
       const isValid = verifyWebhookSignature(req.body, signature);
       if (!isValid) {
         logger.warn("Invalid webhook signature - rejecting request");
         return res.status(401).json({ error: "Invalid signature" });
       }
-    } else if (!config.STREAM_WEBHOOK_SECRET) {
+    } else if (!config.STREAM_API_SECRET) {
       logger.warn(
-        "Stream webhook secret not configured - skipping signature verification"
+        "Stream API secret not configured - skipping signature verification"
       );
     }
 
@@ -154,15 +153,16 @@ async function handleNewMessage(event: any) {
 
 /**
  * Verify webhook signature from Stream
- * Stream signs webhooks with HMAC-SHA256 using the webhook secret
+ * Stream signs webhooks with HMAC-SHA256 using your API Secret
  *
- * Note: The signature is calculated from the raw JSON body string
- * Since Express parses JSON automatically, we stringify the parsed body
- * This should match Stream's signature calculation
+ * Note: Stream uses your existing STREAM_API_SECRET to sign webhooks,
+ * not a separate webhook secret. The signature is calculated from the
+ * raw JSON body string. Since Express parses JSON automatically, we
+ * stringify the parsed body - this should match Stream's signature calculation.
  */
 function verifyWebhookSignature(body: any, signature: string): boolean {
-  if (!signature || !config.STREAM_WEBHOOK_SECRET) {
-    logger.warn("Missing webhook signature or secret");
+  if (!signature || !config.STREAM_API_SECRET) {
+    logger.warn("Missing webhook signature or API secret");
     return false;
   }
 
@@ -171,7 +171,7 @@ function verifyWebhookSignature(body: any, signature: string): boolean {
     // Since Express parsed it, we stringify it back (should match)
     const bodyString = JSON.stringify(body);
     const expectedSignature = crypto
-      .createHmac("sha256", config.STREAM_WEBHOOK_SECRET)
+      .createHmac("sha256", config.STREAM_API_SECRET)
       .update(bodyString)
       .digest("hex");
 

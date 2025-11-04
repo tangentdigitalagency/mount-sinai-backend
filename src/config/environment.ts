@@ -14,7 +14,6 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1),
   STREAM_API_KEY: z.string().min(1),
   STREAM_API_SECRET: z.string().min(1),
-  STREAM_WEBHOOK_SECRET: z.string().min(1).optional(),
   ALLOWED_ORIGINS: z
     .string()
     .default("http://localhost:3000,http://localhost:5173"),
