@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { Request } from "express";
 
 /**
@@ -17,9 +17,14 @@ export const messageRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
-    // Rate limit by user ID if authenticated, otherwise by IP
+    // Rate limit by user ID if authenticated, otherwise by IP (using IPv6-safe helper)
     const userId = (req as any).user?.id;
-    return userId ? `user:${userId}` : `ip:${req.ip}`;
+    if (userId) {
+      return `user:${userId}`;
+    }
+    // Use ipKeyGenerator helper for IPv6-safe IP handling
+    // ipKeyGenerator takes an IP address string, not the request object
+    return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`;
   },
   skip: (_req: Request) => {
     // Skip rate limiting in development
@@ -43,9 +48,14 @@ export const sessionRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
-    // Rate limit by user ID if authenticated, otherwise by IP
+    // Rate limit by user ID if authenticated, otherwise by IP (using IPv6-safe helper)
     const userId = (req as any).user?.id;
-    return userId ? `user:${userId}` : `ip:${req.ip}`;
+    if (userId) {
+      return `user:${userId}`;
+    }
+    // Use ipKeyGenerator helper for IPv6-safe IP handling
+    // ipKeyGenerator takes an IP address string, not the request object
+    return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`;
   },
   skip: (_req: Request) => {
     // Skip rate limiting in development
@@ -69,9 +79,14 @@ export const learningProfileRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
-    // Rate limit by user ID if authenticated, otherwise by IP
+    // Rate limit by user ID if authenticated, otherwise by IP (using IPv6-safe helper)
     const userId = (req as any).user?.id;
-    return userId ? `user:${userId}` : `ip:${req.ip}`;
+    if (userId) {
+      return `user:${userId}`;
+    }
+    // Use ipKeyGenerator helper for IPv6-safe IP handling
+    // ipKeyGenerator takes an IP address string, not the request object
+    return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`;
   },
   skip: (_req: Request) => {
     // Skip rate limiting in development
@@ -94,9 +109,14 @@ export const generalRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
-    // Rate limit by user ID if authenticated, otherwise by IP
+    // Rate limit by user ID if authenticated, otherwise by IP (using IPv6-safe helper)
     const userId = (req as any).user?.id;
-    return userId ? `user:${userId}` : `ip:${req.ip}`;
+    if (userId) {
+      return `user:${userId}`;
+    }
+    // Use ipKeyGenerator helper for IPv6-safe IP handling
+    // ipKeyGenerator takes an IP address string, not the request object
+    return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`;
   },
   skip: (_req: Request) => {
     // Skip rate limiting in development

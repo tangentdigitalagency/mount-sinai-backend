@@ -76,7 +76,7 @@ Start the development server with hot reload:
 npm run dev
 ```
 
-The server runs on `http://localhost:3000` by default.
+The server runs on `http://localhost:8000` by default.
 
 ### Build
 
@@ -139,7 +139,7 @@ Returns basic API information.
 
 | Variable                    | Description                                  | Required                  |
 | --------------------------- | -------------------------------------------- | ------------------------- |
-| `PORT`                      | Server port number                           | No (default: 3000)        |
+| `PORT`                      | Server port number                           | No (default: 8000)        |
 | `NODE_ENV`                  | Environment (development/production/test)    | No (default: development) |
 | `SUPABASE_URL`              | Supabase project URL                         | Yes                       |
 | `SUPABASE_ANON_KEY`         | Supabase anonymous key                       | Yes                       |

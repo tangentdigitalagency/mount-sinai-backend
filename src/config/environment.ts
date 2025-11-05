@@ -4,7 +4,7 @@ import { z } from "zod";
 dotenv.config();
 
 const envSchema = z.object({
-  PORT: z.string().default("3000"),
+  PORT: z.string().default("8000"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
@@ -16,7 +16,9 @@ const envSchema = z.object({
   STREAM_API_SECRET: z.string().min(1),
   ALLOWED_ORIGINS: z
     .string()
-    .default("http://localhost:3000,http://localhost:5173"),
+    .default(
+      "http://localhost:3000,http://localhost:5173, https://mountsanai.app.com, https://www.mountsanai.app.com, https://mount-sanai.vercel.app, https://www.mount-sinai.vercel.app"
+    ),
 });
 
 type EnvConfig = z.infer<typeof envSchema>;

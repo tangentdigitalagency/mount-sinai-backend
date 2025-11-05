@@ -4,6 +4,7 @@ import { exampleRoutes } from "./example.routes";
 import { notesRoutes } from "./notes.routes";
 import { aiChatRoutes } from "./ai-chat.routes";
 import { streamRoutes } from "./stream.routes";
+import { notificationRoutes } from "./notifications.routes";
 
 const router = Router();
 
@@ -25,6 +26,7 @@ export const configureRoutes = (app: Application): void => {
   app.use("/api/notes", notesRoutes);
   app.use("/api/ai-chat", aiChatRoutes);
   app.use("/api/stream", streamRoutes);
+  app.use("/api/notifications", notificationRoutes);
 
   // Add your route modules here
   // Example:

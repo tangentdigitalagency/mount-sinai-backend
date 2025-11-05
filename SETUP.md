@@ -84,7 +84,7 @@ cp .env.example .env
 Edit `.env` and add your actual credentials:
 
 ```env
-PORT=3000
+PORT=8000
 NODE_ENV=development
 
 SUPABASE_URL=https://your-project.supabase.co
@@ -102,7 +102,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 npm run dev
 ```
 
-The server will start on `http://localhost:3000` with hot reload enabled.
+The server will start on `http://localhost:8000` with hot reload enabled.
 
 ### 3. Build for Production
 
@@ -278,7 +278,7 @@ See `documentation/example-endpoints.md` for detailed API documentation.
 
 ### Port Already in Use
 - Change `PORT` in `.env` file
-- Or kill the process using port 3000: `lsof -ti:3000 | xargs kill`
+- Or kill the process using port 8000: `lsof -ti:8000 | xargs kill`
 
 ## 📚 Additional Resources
 
