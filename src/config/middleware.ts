@@ -10,7 +10,9 @@ export const configureMiddleware = (app: Application): void => {
   app.use(helmet());
 
   // CORS configuration
-  const allowedOrigins = config.ALLOWED_ORIGINS.split(",");
+  const allowedOrigins = config.ALLOWED_ORIGINS.split(",").map((origin) =>
+    origin.trim()
+  );
   app.use(
     cors({
       origin: (origin, callback) => {

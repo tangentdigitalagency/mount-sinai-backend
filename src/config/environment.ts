@@ -17,7 +17,7 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z
     .string()
     .default(
-      "http://localhost:3000,http://localhost:5173, https://mountsanai.app.com, https://www.mountsanai.app.com, https://mount-sanai.vercel.app, https://www.mount-sinai.vercel.app"
+      "http://localhost:3000,http://localhost:5173,https://mountsanai.app,https://www.mountsanai.app,https://mount-sinai.vercel.app,https://www.mount-sinai.vercel.app"
     ),
 });
 
