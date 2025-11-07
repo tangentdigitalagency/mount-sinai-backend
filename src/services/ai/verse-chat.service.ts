@@ -4,7 +4,6 @@ import { getSupabaseClient } from "../../config/supabase";
 import { logger } from "../../utils/logger";
 import { ContextBuilderService } from "./context-builder.service";
 import { ConversationalAIService } from "./conversational-ai.service";
-import { TheologicalSourcesService } from "./theological-sources.service";
 import type {
   AIChatSession,
   AIChatMessage,
@@ -22,7 +21,6 @@ export class VerseChatService {
   private openai: OpenAI;
   private supabase = getSupabaseClient();
   private contextBuilder = new ContextBuilderService();
-  private theologicalSources = new TheologicalSourcesService();
   private conversationalAI = new ConversationalAIService();
 
   constructor() {
@@ -97,7 +95,7 @@ export class VerseChatService {
 
     let context = "## Verses in This Conversation\n\n";
 
-    Object.entries(versesByBook).forEach(([key, bookVerses]) => {
+    Object.entries(versesByBook).forEach(([_key, bookVerses]) => {
       const firstVerse = bookVerses[0];
       const sortedVerses = bookVerses.sort((a, b) => a.verse - b.verse);
 
@@ -289,7 +287,7 @@ export class VerseChatService {
    */
   private async processAIResponse(
     response: string,
-    sessionId: string
+    _sessionId: string
   ): Promise<{
     metadata: AIResponseMetadata;
     formattedContent: FormattedContent;
@@ -536,7 +534,7 @@ Keep the greeting brief (2-3 sentences) and encouraging.`;
       const greeting = response.choices[0]?.message?.content || "";
       const { metadata, formattedContent } = await this.processAIResponse(
         greeting,
-        ""
+        "greeting"
       );
 
       return {
