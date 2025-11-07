@@ -3,6 +3,7 @@ import { Router } from "express";
 import { exampleRoutes } from "./example.routes";
 import { notesRoutes } from "./notes.routes";
 import { aiChatRoutes } from "./ai-chat.routes";
+import { verseChatRoutes } from "./verse-chat.routes";
 import { streamRoutes } from "./stream.routes";
 import { notificationRoutes } from "./notifications.routes";
 
@@ -25,6 +26,7 @@ export const configureRoutes = (app: Application): void => {
   app.use("/api/example", exampleRoutes);
   app.use("/api/notes", notesRoutes);
   app.use("/api/ai-chat", aiChatRoutes);
+  app.use("/api/verse-chat", verseChatRoutes);
   app.use("/api/stream", streamRoutes);
   app.use("/api/notifications", notificationRoutes);
 

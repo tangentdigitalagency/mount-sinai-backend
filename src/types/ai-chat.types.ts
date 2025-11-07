@@ -7,7 +7,7 @@ import { z } from "zod";
 export const AIChatSessionSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
-  ai_version: z.enum(["study", "debate", "note-taker", "explainer", "custom"]),
+  ai_version: z.enum(["study", "debate", "note-taker", "explainer", "custom", "verse-chat"]),
   title: z.string(),
   context_book_id: z.string().nullable(),
   context_chapter: z.number().int().positive().nullable(),
@@ -68,7 +68,7 @@ export type AIChatContextSnapshot = z.infer<typeof AIChatContextSnapshotSchema>;
 // ============================================================================
 
 export const CreateChatSessionSchema = z.object({
-  ai_version: z.enum(["study", "debate", "note-taker", "explainer", "custom"]),
+  ai_version: z.enum(["study", "debate", "note-taker", "explainer", "custom", "verse-chat"]),
   title: z.string().optional(),
   context_book_id: z.string().optional(),
   context_chapter: z.number().int().positive().optional(),
@@ -108,6 +108,7 @@ export const AIVersionSchema = z.enum([
   "note-taker",
   "explainer",
   "custom",
+  "verse-chat",
 ]);
 
 export type AIVersion = z.infer<typeof AIVersionSchema>;
@@ -388,3 +389,76 @@ export const DashboardSummarySchema = z.object({
 });
 
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
+
+// ============================================================================
+// VERSE CHAT TYPES
+// ============================================================================
+
+/**
+ * Verse information schema
+ */
+export const VerseInfoSchema = z.object({
+  version: z.string().min(1).max(20), // e.g., "NKJV", "ESV"
+  book_id: z.string().min(1).max(10), // e.g., "JHN"
+  chapter: z.number().int().positive(),
+  verse: z.number().int().positive(),
+  verse_text: z.string().min(1),
+});
+
+export type VerseInfo = z.infer<typeof VerseInfoSchema>;
+
+/**
+ * Verse chat verse database schema
+ */
+export const VerseChatVerseSchema = z.object({
+  id: z.string().uuid(),
+  session_id: z.string().uuid(),
+  message_id: z.string().uuid().nullable(),
+  version: z.string(),
+  book_id: z.string(),
+  chapter: z.number().int().positive(),
+  verse: z.number().int().positive(),
+  verse_text: z.string(),
+  added_at: z.string(),
+  created_at: z.string(),
+});
+
+export type VerseChatVerse = z.infer<typeof VerseChatVerseSchema>;
+
+/**
+ * Create verse chat session request schema
+ */
+export const CreateVerseSessionSchema = z.object({
+  verses: z.array(VerseInfoSchema).min(1),
+  question: z.string().optional(),
+});
+
+export type CreateVerseSession = z.infer<typeof CreateVerseSessionSchema>;
+
+/**
+ * Add verses to session request schema
+ */
+export const AddVersesSchema = z.object({
+  verses: z.array(VerseInfoSchema).min(1),
+});
+
+export type AddVerses = z.infer<typeof AddVersesSchema>;
+
+/**
+ * Send verse chat message request schema
+ */
+export const SendVerseMessageSchema = z.object({
+  content: z.string().min(1),
+  verses: z.array(VerseInfoSchema).optional(),
+});
+
+export type SendVerseMessage = z.infer<typeof SendVerseMessageSchema>;
+
+/**
+ * Verse chat session with verses
+ */
+export const VerseChatSessionSchema = AIChatSessionSchema.extend({
+  verses: z.array(VerseChatVerseSchema).optional(),
+});
+
+export type VerseChatSession = z.infer<typeof VerseChatSessionSchema>;
